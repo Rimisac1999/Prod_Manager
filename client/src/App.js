@@ -9,41 +9,64 @@ function App() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token'));
-
-  const handleLogout = useCallback(() => {
-    setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    setError('');
-    setToken(null);
-    localStorage.removeItem('token');
-  }, []);
+  const [buttons, setButtons] = useState(() => {
+    const savedButtons = localStorage.getItem('buttons');
+    return savedButtons ? JSON.parse(savedButtons) : [];
+  });
+  
+  // Button creation state
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newButtonName, setNewButtonName] = useState('');
+  const [newButtonPoints, setNewButtonPoints] = useState('');
+  const [newButtonType, setNewButtonType] = useState('add');
 
   useEffect(() => {
-    const fetchPointsData = async () => {
-      try {
-        const response = await fetch(`${API_URL}/points`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setPoints(data.points);
-        } else {
-          handleLogout();
-        }
-      } catch (error) {
-        console.error('Error fetching points:', error);
-        handleLogout();
-      }
-    };
+    localStorage.setItem('buttons', JSON.stringify(buttons));
+  }, [buttons]);
 
+  useEffect(() => {
     if (token) {
-      fetchPointsData();
+      fetchPoints();
       setIsLoggedIn(true);
     }
-  }, [token, handleLogout]);
+  }, [token]);
+
+  const fetchPoints = async () => {
+    try {
+      const response = await fetch(`${API_URL}/points`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPoints(data.points);
+      } else {
+        handleLogout();
+      }
+    } catch (error) {
+      console.error('Error fetching points:', error);
+      handleLogout();
+    }
+  };
+
+  const handleCreateButton = (e) => {
+    e.preventDefault();
+    const newButton = {
+      id: Date.now(),
+      name: newButtonName,
+      points: parseInt(newButtonPoints),
+      type: newButtonType
+    };
+    setButtons([...buttons, newButton]);
+    setNewButtonName('');
+    setNewButtonPoints('');
+    setShowCreateForm(false);
+  };
+
+  const handleDeleteButton = (buttonId) => {
+    setButtons(buttons.filter(button => button.id !== buttonId));
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -71,6 +94,15 @@ function App() {
     }
   };
 
+  const handleLogout = useCallback(() => {
+    setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
+    setError('');
+    setToken(null);
+    localStorage.removeItem('token');
+  }, []);
+
   const updatePoints = async (newPoints) => {
     try {
       const response = await fetch(`${API_URL}/points`, {
@@ -94,12 +126,11 @@ function App() {
     }
   };
 
-  const addPoints = (amount) => {
-    updatePoints(points + amount);
-  };
-
-  const removePoints = (amount) => {
-    updatePoints(Math.max(0, points - amount));
+  const handleButtonClick = (button) => {
+    const newPoints = button.type === 'add' 
+      ? points + button.points 
+      : Math.max(0, points - button.points);
+    updatePoints(newPoints);
   };
 
   if (!isLoggedIn) {
@@ -180,29 +211,128 @@ function App() {
       
       <div style={{ 
         display: 'flex', 
-        flexDirection: 'column', 
-        height: '100vh',
+        flexDirection: 'column',
         gap: '20px',
-        paddingTop: '60px'
+        paddingTop: '60px',
+        maxWidth: '800px',
+        margin: '0 auto'
       }}>
-        {/* Top Half - Add Points */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <h2>Add Points</h2>
-          <button onClick={() => addPoints(10)} style={{ padding: '10px', cursor: 'pointer' }}>Add 10 points</button>
-          <button onClick={() => addPoints(20)} style={{ padding: '10px', cursor: 'pointer' }}>Add 20 points</button>
-          <button onClick={() => addPoints(30)} style={{ padding: '10px', cursor: 'pointer' }}>Add 30 points</button>
-          <button onClick={() => addPoints(40)} style={{ padding: '10px', cursor: 'pointer' }}>Add 40 points</button>
-          <button onClick={() => addPoints(50)} style={{ padding: '10px', cursor: 'pointer' }}>Add 50 points</button>
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginBottom: '10px'
+            }}
+          >
+            {showCreateForm ? 'Cancel' : 'Create New Button'}
+          </button>
+
+          {showCreateForm && (
+            <form onSubmit={handleCreateButton} style={{
+              backgroundColor: '#f8f9fa',
+              padding: '20px',
+              borderRadius: '8px'
+            }}>
+              <div style={{ marginBottom: '10px' }}>
+                <input
+                  type="text"
+                  placeholder="Button Name"
+                  value={newButtonName}
+                  onChange={(e) => setNewButtonName(e.target.value)}
+                  style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Points Value"
+                  value={newButtonPoints}
+                  onChange={(e) => setNewButtonPoints(e.target.value)}
+                  style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                  required
+                  min="1"
+                />
+                <select
+                  value={newButtonType}
+                  onChange={(e) => setNewButtonType(e.target.value)}
+                  style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                >
+                  <option value="add">Add Points</option>
+                  <option value="subtract">Subtract Points</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Create Button
+              </button>
+            </form>
+          )}
         </div>
 
-        {/* Bottom Half - Remove Points */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <h2>Remove Points</h2>
-          <button onClick={() => removePoints(10)} style={{ padding: '10px', cursor: 'pointer' }}>Remove 10 points</button>
-          <button onClick={() => removePoints(20)} style={{ padding: '10px', cursor: 'pointer' }}>Remove 20 points</button>
-          <button onClick={() => removePoints(30)} style={{ padding: '10px', cursor: 'pointer' }}>Remove 30 points</button>
-          <button onClick={() => removePoints(40)} style={{ padding: '10px', cursor: 'pointer' }}>Remove 40 points</button>
-          <button onClick={() => removePoints(50)} style={{ padding: '10px', cursor: 'pointer' }}>Remove 50 points</button>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '10px' 
+        }}>
+          {buttons.map(button => (
+            <div key={button.id} style={{
+              position: 'relative',
+              backgroundColor: button.type === 'add' ? '#28a745' : '#dc3545',
+              padding: '15px',
+              borderRadius: '4px',
+              color: 'white'
+            }}>
+              <button
+                onClick={() => handleButtonClick(button)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: 'transparent',
+                  border: '2px solid white',
+                  color: 'white',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginBottom: '5px'
+                }}
+              >
+                {button.name} ({button.type === 'add' ? '+' : '-'}{button.points})
+              </button>
+              <button
+                onClick={() => handleDeleteButton(button.id)}
+                style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  width: '20px',
+                  height: '20px',
+                  padding: 0,
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  lineHeight: '1'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

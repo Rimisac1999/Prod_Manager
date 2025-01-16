@@ -13,10 +13,17 @@ app.use(express.json());
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, 'client/build')));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/points-manager', {
+// MongoDB connection with better error handling
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
 });
 
 // User Schema
@@ -31,9 +38,9 @@ const User = mongoose.model('User', userSchema);
 // Create default user if not exists
 async function createDefaultUser() {
   try {
-    const existingUser = await User.findOne({ username: 'casimirdebonneval' });
+    const existingUser = await User.findOne({ username: 'cas' });
     if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('wFsKw3gOFnGTx8CF', 10);
+      const hashedPassword = await bcrypt.hash('pass', 10);
       await User.create({
         username: 'casimirdebonneval',
         password: hashedPassword,
