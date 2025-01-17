@@ -2,8 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const path = require('path');
 
 const app = express();
@@ -28,69 +26,22 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // User Schema
 const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
+  firebaseUid: { type: String, unique: true, required: true },
   points: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// Create default user if not exists
-async function createDefaultUser() {
-  try {
-    const existingUser = await User.findOne({ username: 'cas' });
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('pass', 10);
-      await User.create({
-        username: 'casimirdebonneval',
-        password: hashedPassword,
-        points: 0
-      });
-      console.log('Default user created');
-    }
-  } catch (error) {
-    console.error('Error creating default user:', error);
-  }
-}
-
-createDefaultUser();
-
-// Login endpoint
-app.post('/api/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'default_secret');
-    res.json({ token, points: user.points });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Middleware to verify JWT
-const authenticateToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
-
-  jwt.verify(token, process.env.JWT_SECRET || 'default_secret', (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
-    req.userId = user.userId;
-    next();
-  });
-};
-
 // Update points endpoint
-app.post('/api/points', authenticateToken, async (req, res) => {
+app.post('/api/points', async (req, res) => {
   try {
-    const { points } = req.body;
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
+    const { firebaseUid, points } = req.body;
+    let user = await User.findOne({ firebaseUid });
+    
+    if (!user) {
+      user = new User({ firebaseUid, points: 0 });
+    }
+    
     user.points = Math.max(0, points);
     await user.save();
     res.json({ points: user.points });
@@ -100,10 +51,13 @@ app.post('/api/points', authenticateToken, async (req, res) => {
 });
 
 // Get points endpoint
-app.get('/api/points', authenticateToken, async (req, res) => {
+app.get('/api/points/:firebaseUid', async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const { firebaseUid } = req.params;
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return res.json({ points: 0 });
+    }
     res.json({ points: user.points });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
