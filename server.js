@@ -30,7 +30,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  points: { type: Number, default: 0 }
+  points: { type: Number, default: 0 },
+  buttons: [{
+    id: String,
+    name: String,
+    points: Number,
+    type: String
+  }]
 });
 
 const User = mongoose.model('User', userSchema);
@@ -105,6 +111,32 @@ app.get('/api/points', authenticateToken, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ points: user.points });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user data endpoint (points and buttons)
+app.get('/api/user-data', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ points: user.points, buttons: user.buttons || [] });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update buttons endpoint
+app.post('/api/buttons', authenticateToken, async (req, res) => {
+  try {
+    const { buttons } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.buttons = buttons;
+    await user.save();
+    res.json({ buttons: user.buttons });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

@@ -11,10 +11,7 @@ function App() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [buttons, setButtons] = useState(() => {
-    const savedButtons = localStorage.getItem('buttons');
-    return savedButtons ? JSON.parse(savedButtons) : [];
-  });
+  const [buttons, setButtons] = useState([]);
   
   // Button creation state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -22,20 +19,10 @@ function App() {
   const [newButtonPoints, setNewButtonPoints] = useState('');
   const [newButtonType, setNewButtonType] = useState('add');
 
-  useEffect(() => {
-    localStorage.setItem('buttons', JSON.stringify(buttons));
-  }, [buttons]);
-
-  useEffect(() => {
-    if (token) {
-      fetchPoints();
-      setIsLoggedIn(true);
-    }
-  }, [token]);
-
-  const fetchPoints = async () => {
+  // Fetch user data (points and buttons)
+  const fetchUserData = async () => {
     try {
-      const response = await fetch(`${API_URL}/points`, {
+      const response = await fetch(`${API_URL}/user-data`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -43,31 +30,62 @@ function App() {
       const data = await response.json();
       if (response.ok) {
         setPoints(data.points);
+        setButtons(data.buttons || []);
       } else {
         handleLogout();
       }
     } catch (error) {
-      console.error('Error fetching points:', error);
+      console.error('Error fetching user data:', error);
       handleLogout();
     }
   };
 
-  const handleCreateButton = (e) => {
+  // Save buttons to server
+  const saveButtons = async (newButtons) => {
+    try {
+      const response = await fetch(`${API_URL}/buttons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ buttons: newButtons })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save buttons');
+      }
+    } catch (error) {
+      console.error('Error saving buttons:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchUserData();
+      setIsLoggedIn(true);
+    }
+  }, [token]);
+
+  const handleCreateButton = async (e) => {
     e.preventDefault();
     const newButton = {
-      id: Date.now(),
+      id: Date.now().toString(),
       name: newButtonName,
       points: parseInt(newButtonPoints),
       type: newButtonType
     };
-    setButtons([...buttons, newButton]);
+    const updatedButtons = [...buttons, newButton];
+    setButtons(updatedButtons);
+    await saveButtons(updatedButtons);
     setNewButtonName('');
     setNewButtonPoints('');
     setShowCreateForm(false);
   };
 
-  const handleDeleteButton = (buttonId) => {
-    setButtons(buttons.filter(button => button.id !== buttonId));
+  const handleDeleteButton = async (buttonId) => {
+    const updatedButtons = buttons.filter(button => button.id !== buttonId);
+    setButtons(updatedButtons);
+    await saveButtons(updatedButtons);
   };
 
   const handleLogin = async (e) => {
