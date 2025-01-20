@@ -1,101 +1,141 @@
-# Points Manager
+# Point Tracker Application
 
-A simple React-based points management system with user authentication and session persistence.
+A full-stack web application for tracking points with dynamic button creation and Firebase authentication.
 
 ## Features
 
-- User Authentication
-  - Login system with username/password
-  - Session persistence
-  - Secure password handling
+- User Authentication with Firebase
+- Dynamic button creation for point management
+- Real-time point tracking
+- MongoDB integration for data persistence
+- Responsive UI design
 
-- Points Management
-  - Custom button creation
-  - Add or subtract points with custom values
-  - Name your own buttons
-  - Delete buttons you don't need
-  - Points counter
-  - Points persistence between sessions
+## Prerequisites
 
-## Getting Started
+- Node.js v21.5.0 or later
+- MongoDB Atlas account
+- Firebase project
+
+## Setup
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Rimisac1999/Prod_Manager
+git clone https://github.com/Rimisac1999/Prod_Manager.git
+cd Prod_Manager
 ```
 
 2. Install dependencies:
 ```bash
-cd Prod_Manager
+# Install server dependencies
 npm install
+
+# Install client dependencies
 cd client
 npm install
+cd ..
 ```
 
-3. Start the development server:
+3. Configure Environment Variables:
+
+Create a `.env` file in the root directory:
+```
+MONGODB_URI=your_mongodb_connection_string
+PORT=5001
+```
+
+Create a `.env` file in the client directory:
+```
+REACT_APP_API_URL=http://localhost:5001/api
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+REACT_APP_FIREBASE_APP_ID=your_firebase_app_id
+```
+
+4. Configure MongoDB:
+- Create a MongoDB Atlas cluster
+- Whitelist your IP address in MongoDB Atlas
+- Update the MONGODB_URI in your `.env` file
+
+5. Configure Firebase:
+- Create a new Firebase project
+- Enable Email/Password authentication
+- Add your web app to Firebase
+- Copy the configuration values to your client `.env` file
+
+## Running the Application
+
+1. Start the server:
 ```bash
-# In the root directory
 npm start
+```
 
-# In another terminal, in the client directory
+2. In a new terminal, start the client:
+```bash
 cd client
 npm start
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5001
 
-## Login Credentials
+## Features Usage
 
-- Username: casimirdebonneval
-- Password: wFsKw3gOFnGTx8CF
+### Authentication
+- Sign up with email and password
+- Log in with existing credentials
+- Automatic session management
 
-## Technologies Used
-
-- React 18
-- MongoDB for data persistence
-- Express.js backend
-- JWT authentication
-- Modern React Hooks (useState, useEffect)
+### Point Management
+- Create custom buttons with:
+  - Button name
+  - Point value
+  - Action type (add/subtract)
+- Track points in real-time
+- Delete unused buttons
+- Points persist across sessions
 
 ## Project Structure
 
 ```
-├── client/                # React frontend
-│   ├── public/
-│   └── src/
-│       ├── App.js        # Main application component
-│       └── index.js      # Application entry point
-└── server.js             # Express backend server
+Prod_Manager/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── App.js         # Main application component
+│   │   └── firebase.js    # Firebase configuration
+│   └── .env               # Client environment variables
+├── server.js              # Express backend server
+├── package.json           # Server dependencies
+└── .env                   # Server environment variables
 ```
 
-## Features in Detail
+## Troubleshooting
 
-### Authentication
-- Secure login system with JWT
-- Error handling for invalid credentials
-- Session persistence using tokens
-- Logout functionality
+1. Firebase Connection Issues:
+   - Verify Firebase configuration in client/.env
+   - Check if Firebase Authentication is enabled
+   - Ensure correct API keys
 
-### Points System
-- Create custom buttons with:
-  - Custom names
-  - Custom point values
-  - Add or subtract functionality
-- Points are saved in MongoDB
-- Cannot go below 0 points
-- Real-time points display
-- Buttons persist between sessions
-- Delete unwanted buttons
+2. MongoDB Connection Issues:
+   - Check if IP is whitelisted in MongoDB Atlas
+   - Verify connection string in .env
+   - Ensure MongoDB cluster is running
 
-### Button Management
-- Create new buttons with custom:
-  - Names
-  - Point values
-  - Type (add/subtract)
-- Delete existing buttons
-- Buttons are saved locally
-- Grid layout for easy access
+3. Port Conflicts:
+   - Default ports: 3000 (client), 5001 (server)
+   - Change ports in .env if needed
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests. 
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License. 
