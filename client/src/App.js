@@ -20,7 +20,7 @@ function App() {
   const [newButtonType, setNewButtonType] = useState('add');
 
   // Fetch user data (points and buttons)
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/user-data`, {
         headers: {
@@ -38,7 +38,14 @@ function App() {
       console.error('Error fetching user data:', error);
       handleLogout();
     }
-  };
+  }, [token, handleLogout]);
+
+  useEffect(() => {
+    if (token) {
+      fetchUserData();
+      setIsLoggedIn(true);
+    }
+  }, [token, fetchUserData]);
 
   // Save buttons to server
   const saveButtons = async (newButtons) => {
@@ -58,13 +65,6 @@ function App() {
       console.error('Error saving buttons:', error);
     }
   };
-
-  useEffect(() => {
-    if (token) {
-      fetchUserData();
-      setIsLoggedIn(true);
-    }
-  }, [token]);
 
   const handleCreateButton = async (e) => {
     e.preventDefault();
@@ -104,6 +104,7 @@ function App() {
         setToken(data.token);
         localStorage.setItem('token', data.token);
         setPoints(data.points);
+        setButtons(data.buttons || []);
         setIsLoggedIn(true);
         setError('');
       } else {

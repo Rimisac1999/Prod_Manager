@@ -72,7 +72,11 @@ app.post('/api/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'default_secret');
-    res.json({ token, points: user.points });
+    res.json({ 
+      token, 
+      points: user.points,
+      buttons: user.buttons || [] 
+    });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
