@@ -19,6 +19,15 @@ function App() {
   const [newButtonPoints, setNewButtonPoints] = useState('');
   const [newButtonType, setNewButtonType] = useState('add');
 
+  const handleLogout = useCallback(() => {
+    setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
+    setError('');
+    setToken(null);
+    localStorage.removeItem('token');
+  }, []);
+
   // Fetch user data (points and buttons)
   const fetchUserData = useCallback(async () => {
     try {
@@ -114,15 +123,6 @@ function App() {
       setError('Server error. Please try again.');
     }
   };
-
-  const handleLogout = useCallback(() => {
-    setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    setError('');
-    setToken(null);
-    localStorage.removeItem('token');
-  }, []);
 
   const updatePoints = async (newPoints) => {
     try {
