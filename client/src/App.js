@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // In production, use relative path
+  : process.env.REACT_APP_API_URL || 'http://localhost:5001/api';  // In development, use environment variable or fallback
 
 function App() {
   const [points, setPoints] = useState(0);

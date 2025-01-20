@@ -110,7 +110,7 @@ app.get('/api/points', authenticateToken, async (req, res) => {
   }
 });
 
-// Serve React app for any other routes
+// Catch all other routes and return the React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
