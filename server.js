@@ -27,16 +27,18 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 // User Schema
+const buttonSchema = new mongoose.Schema({
+  id: String,
+  name: String,
+  points: Number,
+  type: String
+});
+
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   points: { type: Number, default: 0 },
-  buttons: [{
-    id: String,
-    name: String,
-    points: Number,
-    type: String
-  }]
+  buttons: [buttonSchema]  // Define as a proper sub-schema
 });
 
 const User = mongoose.model('User', userSchema);
@@ -44,16 +46,18 @@ const User = mongoose.model('User', userSchema);
 // Create default user if not exists
 async function createDefaultUser() {
   try {
-    const existingUser = await User.findOne({ username: 'cas' });
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('pass', 10);
-      await User.create({
+    const hashedPassword = await bcrypt.hash('pass', 10);
+    await User.findOneAndUpdate(
+      { username: 'casimirdebonneval' },
+      {
         username: 'casimirdebonneval',
         password: hashedPassword,
-        points: 0
-      });
-      console.log('Default user created');
-    }
+        points: 0,
+        buttons: []
+      },
+      { upsert: true, new: true }
+    );
+    console.log('Default user created/updated');
   } catch (error) {
     console.error('Error creating default user:', error);
   }
@@ -72,12 +76,18 @@ app.post('/api/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'default_secret');
+    console.log('User data at login:', {
+      points: user.points,
+      buttons: user.buttons || []
+    });
+    
     res.json({ 
       token, 
       points: user.points,
       buttons: user.buttons || [] 
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -135,13 +145,20 @@ app.get('/api/user-data', authenticateToken, async (req, res) => {
 app.post('/api/buttons', authenticateToken, async (req, res) => {
   try {
     const { buttons } = req.body;
+    console.log('Received buttons:', buttons);
+
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    user.buttons = buttons;
-    await user.save();
-    res.json({ buttons: user.buttons });
+    // Ensure buttons is an array of objects
+    user.buttons = Array.isArray(buttons) ? buttons : [];
+    
+    const savedUser = await user.save();
+    console.log('Saved buttons:', savedUser.buttons);
+    
+    res.json({ buttons: savedUser.buttons });
   } catch (error) {
+    console.error('Error saving buttons:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
