@@ -12,6 +12,7 @@ function App() {
   const [error, setError] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [buttons, setButtons] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
   
   // Button creation state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -216,6 +217,19 @@ function App() {
       }}>
         <span style={{ fontSize: '24px' }}>Points: {points}</span>
         <button 
+          onClick={() => setIsEditMode(!isEditMode)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: isEditMode ? '#ffc107' : '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {isEditMode ? 'Done' : 'Edit'}
+        </button>
+        <button 
           onClick={handleLogout}
           style={{
             padding: '8px 16px',
@@ -332,26 +346,28 @@ function App() {
               >
                 {button.name} ({button.type === 'add' ? '+' : '-'}{button.points})
               </button>
-              <button
-                onClick={() => handleDeleteButton(button.id)}
-                style={{
-                  position: 'absolute',
-                  top: '-5px',
-                  right: '-5px',
-                  width: '20px',
-                  height: '20px',
-                  padding: 0,
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  lineHeight: '1'
-                }}
-              >
-                ×
-              </button>
+              {isEditMode && (
+                <button
+                  onClick={() => handleDeleteButton(button.id)}
+                  style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    width: '20px',
+                    height: '20px',
+                    padding: 0,
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    lineHeight: '1'
+                  }}
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
         </div>
