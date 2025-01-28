@@ -138,4 +138,133 @@ Prod_Manager/
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
+
+## Backend (server.js)
+
+### Database Schema
+- **User Model**
+  - username (String, unique)
+  - password (String, hashed)
+  - points (Number)
+  - buttons (Array of button objects)
+    - id (String)
+    - name (String)
+    - points (Number)
+    - type (String)
+
+### API Endpoints
+- **POST /api/login**
+  - Authenticates user
+  - Returns JWT token, points, and buttons
+- **POST /api/points**
+  - Updates user points
+  - Requires JWT authentication
+- **GET /api/points**
+  - Retrieves current points
+  - Requires JWT authentication
+- **POST /api/buttons**
+  - Saves user's custom buttons
+  - Requires JWT authentication
+- **GET /api/user-data**
+  - Retrieves user's points and buttons
+  - Requires JWT authentication
+
+## Frontend (client/src/App.js)
+
+### Main Components
+- Login form
+- Points display
+- Button creation interface
+- Button display grid
+
+### State Management
+- User authentication state
+- Points tracking
+- Button management
+- Error handling
+
+### Key Features
+1. **Authentication**
+   - JWT-based authentication
+   - Persistent login using localStorage
+
+2. **Points System**
+   - Add/subtract points
+   - Points persistence
+   - Real-time updates
+
+3. **Custom Buttons**
+   - Create custom point buttons
+   - Save button configurations
+   - Different button types (add/subtract)
+
+## Authentication Flow
+1. User enters credentials
+2. Server validates and returns JWT
+3. Token stored in localStorage
+4. Token included in subsequent API requests
+
+## Data Flow
+1. User creates/modifies buttons
+2. Changes saved to MongoDB
+3. Points updated in real-time
+4. State synchronized between frontend and backend
+
+## Security Features
+- Passwords hashed using bcrypt
+- JWT authentication
+- Protected API endpoints
+- Input validation
+
+## Environment Variables
+Required environment variables in .env:
+- MONGODB_URI: MongoDB connection string
+- JWT_SECRET: Secret for JWT signing
+- PORT: Server port (default: 5001)
+
+## Setup Instructions
+1. Install dependencies:
+   ```bash
+   npm install         # Backend dependencies
+   cd client
+   npm install        # Frontend dependencies
+   ```
+
+2. Create .env file with required variables
+
+3. Start development servers:
+   ```bash
+   # Terminal 1 - Backend
+   node server.js
+
+   # Terminal 2 - Frontend (development)
+   cd client
+   npm start
+   ```
+
+4. Build for production:
+   ```bash
+   cd client
+   npm run build
+   ```
+
+## Production Deployment
+The application is configured to serve the React production build through Express:
+- Frontend built files served from client/build
+- All routes not matching /api/* serve index.html
+- Static assets served from build directory
+
+## Error Handling
+- Frontend form validation
+- Backend API validation
+- Database error handling
+- JWT validation
+- Proper error responses
+
+## Future Improvements
+- Add user registration
+- Enhanced button customization
+- Activity history
+- User profiles
+- Point categories 
